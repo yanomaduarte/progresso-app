@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="theme-color" content="#0f0f0f" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Progresso" />
+  <title>Progresso</title>
+  <link rel="manifest" href="manifest.json" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0c0c0c;
+      --surface: #161616;
+      --surface2: #1e1e1e;
+      --border: rgba(255,255,255,0.08);
+      --text: #f0ede8;
+      --muted: rgba(240,237,232,0.45);
+      --accent: #c8f07a;
+      --accent-dim: rgba(200,240,122,0.12);
+      --danger: #f07a7a;
+      --radius: 16px;
+    }
+
+    html, body {
+      height: 100%;
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #app { height: 100%; display: flex; flex-direction: column; }
+
+    /* ── Header ── */
+    header {
+      padding: 52px 24px 20px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border);
+    }
+    .header-title h1 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 32px;
+      font-weight: 400;
+      letter-spacing: -0.5px;
+      line-height: 1;
+    }
+    .header-title p {
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+    #auth-btn {
+      background: var(--accent);
+      color: #0c0c0c;
+      border: none;
+      border-radius: 100px;
+      padding: 8px 16px;
+      font-size: 13px;
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 500;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: opacity .15s;
+    }
+    #auth-btn:hover { opacity: .85; }
+    #auth-btn.signed-in { background: var(--surface2); color: var(--muted); }
+
+    /* ── Nav tabs ── */
+    nav {
+      display: flex;
+      gap: 4px;
+      padding: 16px 24px 0;
+    }
+    .tab {
+      background: none;
+      border: none;
+      color: var(--muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      font-weight: 400;
+      padding: 8px 16px;
+      border-radius: 100px;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .tab.active { background: var(--surface2); color: var(--text); }
+
+    /* ── Content ── */
+    main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    /* ── Page sections ── */
+    .page { display: none; animation: fadeUp .3s ease; }
+    .page.active { display: block; }
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* ── Register form ── */
+    .form-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+      display: block;
+    }
+    .form-group { margin-bottom: 20px; }
+
+    .upload-zone {
+      border: 1.5px dashed var(--border);
+      border-radius: var(--radius);
+      height: 200px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: border-color .2s;
+      background: var(--surface);
+    }
+    .upload-zone:hover { border-color: rgba(255,255,255,0.2); }
+    .upload-zone input { position: absolute; inset: 0; opacity: 0; cursor: pointer; }
+    .upload-zone img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+    .upload-zone .upload-hint { font-size: 13px; color: var(--muted); z-index: 1; pointer-events: none; }
+    .upload-zone .upload-icon { font-size: 28px; z-index: 1; pointer-events: none; }
+    .upload-zone.has-image .upload-hint, .upload-zone.has-image .upload-icon { display: none; }
+
+    .form-row { display: flex; gap: 12px; }
+    .form-row .form-group { flex: 1; }
+
+    input[type="date"], input[type="number"], textarea, select {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 12px 14px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 300;
+      outline: none;
+      transition: border-color .15s;
+      appearance: none;
+    }
+    input[type="date"]:focus, input[type="number"]:focus, textarea:focus {
+      border-color: rgba(255,255,255,0.25);
+    }
+    textarea { resize: none; height: 80px; }
+
+    .btn-primary {
+      width: 100%;
+      background: var(--accent);
+      color: #0c0c0c;
+      border: none;
+      border-radius: 12px;
+      padding: 16px;
+      font-family: 'DM Sans', sans-serif;
+      font-size: 15px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: opacity .15s, transform .1s;
+    }
+    .btn-primary:hover { opacity: .9; }
+    .btn-primary:active { transform: scale(.99); }
+    .btn-primary:disabled { opacity: .4; cursor: not-allowed; }
+
+    /* ── Status message ── */
+    #status-msg {
+      margin-top: 12px;
+      font-size: 13px;
+      text-align: center;
+      color: var(--muted);
+      min-height: 18px;
+    }
+    #status-msg.ok { color: var(--accent); }
+    #status-msg.err { color: var(--danger); }
+
+    /* ── Gallery ── */
+    .gallery-empty {
+      text-align: center;
+      padding: 60px 0;
+      color: var(--muted);
+    }
+    .gallery-empty .big { font-family: 'DM Serif Display', serif; font-size: 48px; }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    .gallery-card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      overflow: hidden;
+      cursor: pointer;
+      transition: transform .15s;
+      border: 1px solid var(--border);
+    }
+    .gallery-card:hover { transform: scale(1.02); }
+    .gallery-card img { width: 100%; aspect-ratio: 3/4; object-fit: cover; display: block; }
+    .gallery-card .card-info { padding: 10px 12px; }
+    .gallery-card .card-date { font-size: 12px; color: var(--muted); }
+    .gallery-card .card-weight {
+      font-family: 'DM Serif Display', serif;
+      font-size: 20px;
+      margin-top: 2px;
+    }
+    .gallery-card .card-weight span { font-size: 13px; font-family: 'DM Sans', sans-serif; color: var(--muted); }
+
+    /* ── Lightbox ── */
+    #lightbox {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.92);
+      z-index: 100;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      gap: 16px;
+    }
+    #lightbox.open { display: flex; }
+    #lightbox img { max-width: 100%; max-height: 65vh; border-radius: 12px; object-fit: contain; }
+    .lb-info { text-align: center; }
+    .lb-info .lb-date { font-size: 13px; color: var(--muted); }
+    .lb-info .lb-weight { font-family: 'DM Serif Display', serif; font-size: 28px; margin-top: 4px; }
+    .lb-info .lb-note { font-size: 13px; color: var(--muted); margin-top: 6px; max-width: 300px; }
+    .lb-close {
+      position: absolute;
+      top: 52px; right: 24px;
+      background: var(--surface2);
+      border: none;
+      color: var(--text);
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    /* ── Progress page ── */
+    .stat-row { display: flex; gap: 12px; margin-bottom: 24px; }
+    .stat-card {
+      flex: 1;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .stat-card .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+    .stat-card .stat-value { font-family: 'DM Serif Display', serif; font-size: 28px; margin-top: 4px; }
+    .stat-card .stat-value.positive { color: var(--accent); }
+    .stat-card .stat-value.negative { color: var(--danger); }
+    .stat-card .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+    .section-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    .timeline { display: flex; flex-direction: column; gap: 1px; }
+    .timeline-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .timeline-item img { width: 44px; height: 44px; border-radius: 8px; object-fit: cover; flex-shrink: 0; }
+    .timeline-item .tl-info { flex: 1; }
+    .timeline-item .tl-date { font-size: 12px; color: var(--muted); }
+    .timeline-item .tl-weight { font-weight: 500; font-size: 16px; }
+    .timeline-item .tl-note { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 180px; }
+    .timeline-item .tl-diff { font-size: 13px; font-weight: 500; flex-shrink: 0; }
+    .tl-diff.pos { color: var(--accent); }
+    .tl-diff.neg { color: var(--danger); }
+
+    /* Loading overlay */
+    #loading {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(12,12,12,0.7);
+      z-index: 200;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      gap: 12px;
+    }
+    #loading.show { display: flex; }
+    .spinner {
+      width: 32px; height: 32px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin .7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    #loading p { font-size: 13px; color: var(--muted); }
+  </style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <div class="header-title">
+      <h1>Progresso</h1>
+      <p id="header-sub">faça login para começar</p>
+    </div>
+    <button id="auth-btn" onclick="handleAuth()">Entrar com Google</button>
+  </header>
+
+  <nav>
+    <button class="tab active" onclick="showPage('register', this)">Registrar</button>
+    <button class="tab" onclick="showPage('gallery', this)">Fotos</button>
+    <button class="tab" onclick="showPage('progress', this)">Evolução</button>
+  </nav>
+
+  <main>
+    <!-- REGISTER -->
+    <section class="page active" id="page-register">
+      <div class="form-group">
+        <label class="form-label">Foto</label>
+        <div class="upload-zone" id="upload-zone">
+          <input type="file" id="photo-input" accept="image/*" capture="environment" onchange="handlePhoto(this)" />
+          <div class="upload-icon">📷</div>
+          <div class="upload-hint">Toque para fotografar ou escolher</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Data</label>
+          <input type="date" id="input-date" />
+        </div>
+        <div class="form-group">
+          <label class="form-label">Peso (kg)</label>
+          <input type="number" id="input-weight" placeholder="75.0" step="0.1" min="30" max="300" />
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Observações</label>
+        <textarea id="input-note" placeholder="Como você está se sentindo hoje?"></textarea>
+      </div>
+
+      <button class="btn-primary" id="save-btn" onclick="saveEntry()" disabled>Salvar no Drive</button>
+      <div id="status-msg"></div>
+    </section>
+
+    <!-- GALLERY -->
+    <section class="page" id="page-gallery">
+      <div id="gallery-content">
+        <div class="gallery-empty">
+          <div class="big">📷</div>
+          <p style="margin-top:12px">Nenhum registro ainda</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- PROGRESS -->
+    <section class="page" id="page-progress">
+      <div id="progress-content">
+        <div class="gallery-empty">
+          <div class="big">📈</div>
+          <p style="margin-top:12px">Sem dados ainda</p>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Lightbox -->
+<div id="lightbox">
+  <button class="lb-close" onclick="closeLightbox()">✕</button>
+  <img id="lb-img" src="" alt="" />
+  <div class="lb-info">
+    <div class="lb-date" id="lb-date"></div>
+    <div class="lb-weight" id="lb-weight"></div>
+    <div class="lb-note" id="lb-note"></div>
+  </div>
+</div>
+
+<!-- Loading -->
+<div id="loading">
+  <div class="spinner"></div>
+  <p id="loading-msg">Salvando...</p>
+</div>
+
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="app.js"></script>
+</body>
+</html>
